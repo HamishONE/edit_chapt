@@ -4,10 +4,16 @@ import subprocess
 import sys
 
 FFMPEG = "ffmpeg"
+FFPROBE = "ffprobe"
 EDITOR = os.getenv("EDITOR", "vim")
-MAX_LENGTH = 1000000
 AUTOMATIC_CHAPTER = "Intro"
 TIMEBASE = 1000
+
+
+def get_duration(file):
+	cmd = FFPROBE + ' -i {} -show_entries format=duration -v quiet -of csv="p=0"'.format(file)
+	output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+	return int(float(output))
 
 
 def int_to_str(int_in):
@@ -37,6 +43,7 @@ output_name = input_name_only + "_tmp_out" + input_extension
 try:
 	chapters = []
 	new_chapters = []
+	max_length = get_duration(input_name)
 
 	# Extract current metadata
 	extract_meta_args = [FFMPEG, '-y', '-i', input_name, '-f', 'ffmetadata', input_meta_name]
@@ -67,7 +74,7 @@ try:
 		chapters.append({
 			"TIMEBASE": TIMEBASE,
 			"START": 0,
-			"END": MAX_LENGTH * TIMEBASE,
+			"END": max_length * TIMEBASE,
 			"title": "Intro"
 		})
 
@@ -101,10 +108,15 @@ try:
 		output_meta.write(";FFMETADATA1\n\n")
 		for index, chapter in enumerate(new_chapters):
 			if index + 1 == len(new_chapters):
-				end = MAX_LENGTH
+				end = max_length
 			else:
 				next_chapter = new_chapters[index + 1]
 				end = next_chapter["START"]
+
+			if chapter['START'] > max_length:
+				wanted = int_to_str(chapter['START'])
+				limit = int_to_str(max_length)
+				raise Exception(f"Chapter cannot start at {wanted}, the video is only {limit} long")
 
 			output_meta.write("[CHAPTER]\n")
 			output_meta.write(f"TIMEBASE=1/{TIMEBASE}\n")
