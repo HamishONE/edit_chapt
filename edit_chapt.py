@@ -11,7 +11,7 @@ TIMEBASE = 1000
 
 
 def get_duration(file):
-	cmd = FFPROBE + ' -i {} -show_entries format=duration -v quiet -of csv="p=0"'.format(file)
+	cmd = FFPROBE + ' -i "{}" -show_entries format=duration -v quiet -of csv="p=0"'.format(file)
 	output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
 	return int(float(output))
 
@@ -127,7 +127,7 @@ try:
 	# Create a new video file with the metadata
 	run_args = [FFMPEG, '-y', '-i', input_name, '-i', output_meta_name,
 				'-map_metadata', '1', '-map_chapters', '1', '-codec', 'copy', output_name]
-	subprocess.check_output(run_args, stderr=subprocess.DEVNULL)
+	subprocess.check_output(run_args)
 
 	# Rename the files
 	os.replace(input_name, input_name + ".old")
