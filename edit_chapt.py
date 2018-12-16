@@ -97,7 +97,8 @@ try:
 			if line == "":
 				continue
 
-			name, start = line.split(" ")
+			start = line.split(" ")[-1]
+			name = line.replace(start, "").strip()
 			new_chapters.append({
 				"START": str_to_int(start),
 				"title": name
